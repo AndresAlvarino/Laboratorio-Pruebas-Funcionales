@@ -51,24 +51,60 @@
 
 ---
 
-## 5. Cómo se prueban modelos de IA en producción
+## 5. Análisis
 
-- **Validación offline:** conjuntos de prueba separados (holdout).  
-- **Canary releases / A-B testing:** comparar versiones de modelos en producción.  
-- **Monitoreo en tiempo real:** métricas de precisión, latencia, fairness, costos.  
-- **Guardrails:** restricciones de salida para evitar errores graves.  
-- **Reentrenamiento continuo:** detectar deriva de datos.
+### ¿Qué pruebas fallaron?
+- En principio, todas las pruebas diseñadas **no fallaron técnicamente**: el framework automático las ejecutó sin errores de script.
+- Pero detectamos un “fallo funcional”: la prueba de **división por cero** no arrojó un resultado ni mensaje; el campo de resultado quedó vacío. Esto revela que la aplicación **no maneja bien ese caso**.
+- También, al ingresar **texto o símbolos** en los campos numéricos, la calculadora no muestra un error explícito: simplemente no muestra resultado.
+
+### ¿Se detectaron comportamientos inesperados?
+- Sí: la aplicación **no valida entradas inválidas (texto, símbolos, vacíos)**, lo cual puede llevar a estados ambiguos o silenciosos.
+- La división por cero queda en un estado “silencioso” (campo vacío), en vez de mostrar un mensaje de error claro.
+- En el login, al ingresar símbolos o datos extraños, el sistema sí responde con mensaje de error “Your username is invalid!”, lo cual es un comportamiento esperado y correcto.
+
+### ¿Cómo se pueden probar aplicaciones móviles?
+- Usando **Appium**, que permite controlar apps móviles (Android / iOS) de manera similar a Selenium.
+- Se instalan drivers como **UiAutomator2** (Android) o **XCUITest** (iOS).  
+- Se usan emuladores o dispositivos reales, se definen rutas de interacción (screens, tapping, swiping) y se capturan logs, capturas de pantalla o video.
+- Se validan inputs, navegación, latencia, interrupciones (llamadas, notificaciones), consumo de batería / memoria.
+- Para apps híbridas o webviews, se pueden combinar herramientas de automatización web dentro del contexto móvil.
+
+### ¿Cómo hacer pruebas de modelos de inteligencia artificial en producción?
+- Validación offline (datasets de prueba, validaciones cruzadas) antes de desplegar.
+- **Canary releases / pruebas A/B**: desplegar el nuevo modelo para un porcentaje de usuarios y comparar.
+- Monitoreo continuo de métricas: precisión, recall, latencia, tasa de error, sesgos (“fairness”).
+- Detector de deriva de datos: si los datos que llegan cambian con el tiempo, se reentrena.
+- Guardrails / filtros: evitar que el modelo genere salidas peligrosas o fuera de rango.
+- Pruebas de regresión del modelo: asegurar que nuevas versiones no empeoren casos existentes.
 
 ---
 
-## 6. Conclusión
+## 6. Comparación usando Playwright, Puppeteer y la URL de la calculadora
 
-El laboratorio permitió:
-- Diseñar y ejecutar pruebas automatizadas con Selenium, Playwright y Puppeteer.  
-- Detectar limitaciones en la aplicación (ej. división por cero y entradas inválidas).  
-- Comparar distintas herramientas de automatización.  
-- Reflexionar sobre pruebas en entornos más avanzados (móviles, IA).  
+### Resultados obtenidos
 
-**Entregables listos:** planillas, scripts, evidencias y este informe cumplen con lo solicitado por la guía.
+| Herramienta   | Login exitoso | Login inválido | Suma 5 + 7 | División 8 / 0 | Texto/símbolos entradas |
+|----------------|----------------|------------------|-------------|------------------|--------------------------|
+| **Selenium**   | ✅ correcto     | ✅ correcto        | ✅ = 12      | Resultado vacío    | Entrada inválida → error detectado |
+| **Playwright** | ✅ correcto     | ✅ correcto        | ✅ = 12      | Resultado vacío    | Incorrecto → prueba detecta vacío |
+| **Puppeteer**  | ✅ correcto     | ✅ correcto        | ✅ = 12      | Resultado vacío    | Igual que los anteriores |
+
+- En todas las herramientas, el comportamiento ante los mismos inputs fue consistente: los casos “normales” pasaron, los casos inválidos fueron detectados por las pruebas como errores controlados, y la división por cero deriva en campo vacío que nuestras pruebas interpretan como error.
+- No hubo discrepancias importantes entre herramientas en cuanto a lógica de prueba. Sin embargo:
+  - **Playwright** ofrece mejor manejo de esperas automáticas y menor flakiness.
+  - **Puppeteer** es más simple para casos de uso centrados en Chrome.
+  - **Selenium** es más universal (varios navegadores), pero requiere más control de esperas manuales.
+
+### Observaciones adicionales
+- En las tres herramientas es posible capturar capturas de pantalla o logs automáticamente.
+- Playwright permite tracing / videos de sesión, lo cual es un plus para auditoría visual.
+- Puppeteer es liviano y rápido, ideal para pruebas sencillas en entorno Node.js.
 
 ---
+
+## Conclusión general
+
+El laboratorio cumplió su propósito: construir pruebas automatizadas robustas con Selenium, Playwright y Puppeteer, identificar debilidades del sistema (validaciones débiles, división por cero), y comparar el rendimiento y la ergonomía de las distintas herramientas.  
+Para entregar al profesor, este informe junto con las planillas, scripts y evidencias cubren todos los requisitos del documento de laboratorio.
+
