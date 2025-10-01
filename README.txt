@@ -14,6 +14,8 @@ source .venv/bin/activate  # Linux/Mac
 ### 2. Instalar dependencias de Python
 ```
 pip install -r requirements.txt
+python -m playwright install
+
 ```
 
 ### 3. Instalar dependencias de Node.js (Puppeteer)
